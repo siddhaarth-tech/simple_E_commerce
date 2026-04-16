@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,4 +33,40 @@
     </main>
     <script src="script.js"></script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body onload="checkAuth(); updateCartCount(); displayFinalTotal();">
+    <nav>
+        <h1>MiniShop</h1>
+        <div class="nav-links">
+            <a href="products.html">Products</a>
+            <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
+        </div>
+    </nav>
+    <main class="container">
+        <div class="auth-container" style="width: 400px; margin-top: 50px;">
+            <h2>Secure Checkout</h2>
+            <p>Total Amount: <b>$<span id="checkout-total">0</span></b></p>
+            <form id="payment-form">
+                <input type="text" placeholder="Full Name" required>
+                <input type="text" placeholder="Shipping Address" required>
+                <input type="text" placeholder="Card Number (16 digits)" pattern="\d{16}" required>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" placeholder="MM/YY" required>
+                    <input type="text" placeholder="CVV" pattern="\d{3}" required>
+                </div>
+                <button type="submit" class="btn-success">Pay Now</button>
+            </form>
+        </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+>>>>>>> ea064ecc6d5020d5ac3353c6f8a4b7f52609f160
 </html>
