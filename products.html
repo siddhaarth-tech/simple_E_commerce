@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - MiniShop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body onload="checkAuth(); fetchProducts(); updateCartCount();">
+    <nav>
+        <h1>MiniShop</h1>
+        <div class="nav-links">
+            <a href="products.html">Products</a>
+            <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
+            <button onclick="logout()" class="btn-danger">Logout</button>
+        </div>
+    </nav>
+    <main class="container">
+        <div id="product-list" class="product-grid"></div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
