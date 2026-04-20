@@ -271,8 +271,3 @@ input.invalid {
 
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-    .detail-card { flex-direction: column; gap: 20px; }
-    .detail-img img { max-width: 100%; }
-}
