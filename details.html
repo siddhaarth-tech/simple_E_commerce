@@ -1,29 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details | MiniShop</title>
+    <title>Details</title>
+    <meta charset="UTF-8"><title>MiniShop</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body onload="checkAuth(); fetchProductDetails(); updateCartCount();">
+<body>
+    <div id="header-wrapper"></div>
 
-    <nav>
-        <h1>MiniShop</h1>
-        <div class="nav-links">
-            <span>Welcome, <b id="user-display">Guest</b>!</span>
-            <a href="products.html">Products</a>
-            <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
-            <button onclick="logout()" class="btn-danger">Logout</button>
-        </div>
-    </nav>
+    <main id="app-content" class="container"></main>
 
-    <main class="container">
-        <div id="product-detail-container" class="detail-view">
-            <p style="text-align: center; margin-top: 50px;">Loading product details...</p>
-        </div>
-    </main>
-
+    <div id="toast"></div>
     <script src="script.js"></script>
 </body>
 </html>
