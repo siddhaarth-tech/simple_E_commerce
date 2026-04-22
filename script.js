@@ -156,7 +156,7 @@ async function initDetails() {
 
         const p = await res.json();
         
-        // Render the product (Same as before)
+        // Render the product 
         content.innerHTML = `
             <div class="detail-card" style="display:flex; gap:40px; background:white; padding:40px; border-radius:8px; margin-top:20px;">
                 <img src="${p.thumbnail}" style="width:400px; object-fit:contain;">
@@ -171,7 +171,6 @@ async function initDetails() {
             </div>`;
             
     } catch (err) {
-        // 3. Handle any fetching or 404 errors
         displayErrorAndRedirect(content, "Oops! The product you are looking for does not exist.");
     }
 }
