@@ -175,22 +175,6 @@ async function initDetails() {
     }
 }
 
-function handleLogin(event) {
-    event.preventDefault();
-    
-    const username = document.getElementById('username').value;
-    const usernameGroup = document.getElementById('username-group'); // The container div
-
-    // Reset states first
-    usernameGroup.classList.remove('show-error');
-
-    if (username.trim() === "") {
-        // Only show if actually empty
-        usernameGroup.classList.add('show-error');
-    } else {
-        // Proceed with login...
-    }
-}
 
 // Helper function to show a centered error and redirect
 function displayErrorAndRedirect(container, message) {
