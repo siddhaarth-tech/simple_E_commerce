@@ -180,7 +180,7 @@ async function initDetails() {
 function displayErrorAndRedirect(container, message) {
     container.innerHTML = `
         <div style="text-align:center; padding:100px; background:white; border-radius:8px; margin-top:20px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-            <h1 style="color:var(--error); font-size:50px; margin:0;">⚠</h1>
+            <h1 style="color:var(--error); font-size:50px; margin:0;"></h1>
             <h2 style="color:#333;">${message}</h2>
             <p style="color:#666;">Redirecting you back to the shop in 3 seconds...</p>
             <button onclick="location.href='products.html'">Go Back Now</button>
@@ -199,7 +199,7 @@ function addToCart(id, title, price) {
     if (item) item.qty++;
     else cart.push({ id, title, price, qty: 1 });
     saveCart();
-    showToast(`✔ Added ${title} to cart`);
+    showToast(` Added ${title} to cart`);
 }
 
 function saveCart() {
