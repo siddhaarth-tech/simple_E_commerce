@@ -1,7 +1,3 @@
-/**
- * MiniShop Master Script
- * Fully updated for Template-based Details View and Server-Side Sorting.
- */
 
 const API_URL = 'https://dummyjson.com';
 let cart = JSON.parse(localStorage.getItem('shop_cart')) || [];
