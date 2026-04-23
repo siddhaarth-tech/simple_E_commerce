@@ -1,350 +1,283 @@
+/**
+ * MiniShop Master Script
+ * Fully updated for Template-based Details View and Server-Side Sorting.
+ */
+
 const API_URL = 'https://dummyjson.com';
 let cart = JSON.parse(localStorage.getItem('shop_cart')) || [];
-let allProducts = [];
+let searchTimeout;
 
-// --- 1. Reusable Header with Logic to Hide Links on Login Page ---
-function injectHeader() {
+// --- 1. HEADER & NAVIGATION LOGIC ---
+async function injectHeader() {
     const wrapper = document.getElementById('header-wrapper');
     if (!wrapper) return;
-
-    const token = localStorage.getItem('token');
-    const name = localStorage.getItem('userName') || 'User';
-    
-    // Check if current page is Login
-    const isLoginPage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/';
-    const isProductPage = window.location.pathname.includes('products.html');
-    const count = cart.reduce((s, i) => s + i.qty, 0);
-
-    // If on Login page, show ONLY the logo
-    if (isLoginPage) {
-        wrapper.innerHTML = `
-            <nav>
-                <div class="logo">MiniShop</div>
-            </nav>`;
-        return;
+    try {
+        const response = await fetch('header.html');
+        wrapper.innerHTML = await response.text();
+        setupHeaderInteractions();
+    } catch (err) {
+        console.error("Header failed to load:", err);
     }
-
-    // On all other pages, show the full Navigation
-    wrapper.innerHTML = `
-        <nav>
-            <div class="logo" onclick="location.href='products.html'">MiniShop</div>
-            <div class="nav-links">
-                <span>Hello, <b>${name}</b></span>
-                <a href="cart.html">Cart (<span id="cart-count">${count}</span>)</a>
-                <button class="btn-danger" onclick="logout()" style="padding:5px 10px; font-size:12px;">Logout</button>
-            </div>
-        </nav>
-        ${isProductPage ? `
-            <div class="toolbar">
-                <input type="text" id="search-bar" placeholder="Search products..." oninput="handleSearch(this.value)">
-                <select id="sort-price" onchange="handleSort(this.value)">
-                    <option value="">Sort By Price</option>
-                    <option value="low">Low to High</option>
-                    <option value="high">High to Low</option>
-                </select>
-            </div>
-        ` : ''}`;
 }
 
-// --- 2. Auth Logic ---
-const loginForm = document.getElementById('login-form');
-if (loginForm) {
-    loginForm.onsubmit = async (e) => {
+function setupHeaderInteractions() {
+    const token = localStorage.getItem('token');
+    const isLogin = window.location.pathname.includes('index.html') || window.location.pathname === '/';
+    
+    const logo = document.getElementById('nav-logo');
+    if (logo) {
+        logo.onclick = () => location.href = token ? 'products.html' : 'index.html';
+    }
+
+    if (isLogin || !token) return;
+
+    const userNameDisplay = document.getElementById('user-display-name');
+    if (userNameDisplay) userNameDisplay.innerText = localStorage.getItem('userName');
+    
+    updateCartBadge();
+
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.onclick = () => {
+            localStorage.clear();
+            location.href = 'index.html';
+        };
+    }
+
+    const toolbar = document.getElementById('search-toolbar');
+    if (toolbar && window.location.pathname.includes('products.html')) {
+        toolbar.style.display = 'flex';
+        document.getElementById('search-bar').oninput = (e) => debounceSearch(e.target.value);
+        document.getElementById('sort-price').onchange = () => handleApiSortAndSearch();
+    }
+}
+
+// --- 2. AUTHENTICATION (index.html) ---
+function initLogin() {
+    const content = document.getElementById('app-content');
+
+    const form = document.getElementById('login-form');
+    form.onsubmit = async (e) => {
         e.preventDefault();
-        const user = e.target.username.value;
-        const pass = e.target.password.value;
-        const btn = document.getElementById('login-btn');
-        const errorMsg = document.getElementById('auth-error');
-
-        btn.disabled = true;
-        btn.innerText = "Verifying...";
-        if (errorMsg) errorMsg.innerText = "";
-
+        if (!validateField('username', 'Required') || !validateField('password', 'Required')) return;
         try {
             const res = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: user, password: pass })
+                body: JSON.stringify({ username: e.target.username.value, password: e.target.password.value })
             });
-
+            const data = await res.json();
             if (res.ok) {
-                const data = await res.json();
                 localStorage.setItem('token', data.accessToken);
-                localStorage.setItem('userName', user);
-                window.location.href = 'products.html';
+                localStorage.setItem('userName', data.username);
+                location.href = 'products.html';
             } else {
-                if (errorMsg) errorMsg.innerText = "Invalid username or password!";
-                btn.disabled = false;
-                btn.innerText = "Login";
+                document.getElementById('auth-error').innerText = "Invalid credentials!";
             }
-        } catch (err) {
-            if (errorMsg) errorMsg.innerText = "Server error. Try again later.";
-            btn.disabled = false;
-            btn.innerText = "Login";
-        }
+        } catch (err) { document.getElementById('auth-error').innerText = "Server error."; }
     };
 }
 
-// --- 3. Product Logic ---
-async function initProducts() {
+// --- 3. PRODUCTS (FETCH, SEARCH, SORT) ---
+function debounceSearch(query) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => handleApiSortAndSearch(), 500);
+}
+
+function handleApiSortAndSearch() {
+    const query = document.getElementById('search-bar').value;
+    const sortVal = document.getElementById('sort-price').value;
+    let sortBy = '', order = '';
+    if (sortVal === 'low') { sortBy = 'price'; order = 'asc'; }
+    else if (sortVal === 'high') { sortBy = 'price'; order = 'desc'; }
+    fetchProducts(query, sortBy, order);
+}
+
+async function fetchProducts(query = '', sortBy = '', order = '') {
     const content = document.getElementById('app-content');
     if (!content) return;
-    
-    content.innerHTML = '<div class="loader"></div><div id="product-list" class="product-grid"></div>';
-    
+    content.innerHTML = '<div class="loader"></div>';
     try {
-        const res = await fetch(`${API_URL}/products`);
+        let url = `${API_URL}/products`;
+        if (query) url += `/search?q=${query}`;
+        const separator = url.includes('?') ? '&' : '?';
+        if (sortBy) url += `${separator}sortBy=${sortBy}&order=${order}`;
+        const res = await fetch(url);
         const data = await res.json();
-        allProducts = data.products;
-        renderGrid(allProducts);
-    } catch (err) {
-        content.innerHTML = "<h3>Error loading products.</h3>";
-    }
+        renderProductGrid(data.products);
+    } catch (err) { content.innerHTML = "<h3>Error fetching products.</h3>"; }
 }
 
-function renderGrid(list) {
-    const grid = document.getElementById('product-list');
-    if (!grid) return;
-    document.querySelector('.loader')?.remove();
-    
-    if (list.length === 0) {
-        grid.innerHTML = "<h3>No products found.</h3>";
-        return;
-    }
-
-    grid.innerHTML = list.map(p => `
-        <div class="product-card">
-            <img src="${p.thumbnail}" onclick="location.href='details.html?id=${p.id}'" style="cursor:pointer" alt="${p.title}">
-            <h4>${p.title}</h4>
-            <p><b>$${p.price}</b></p>
-            <button onclick="addToCart(${p.id}, '${p.title.replace(/'/g, "\\'")}', ${p.price})">Add to Cart</button>
-        </div>
-    `).join('');
+function renderProductGrid(products) {
+    const content = document.getElementById('app-content');
+    const template = document.getElementById('product-card-template');
+    if (!content || !template) return;
+    content.innerHTML = '';
+    content.className = 'product-grid container';
+    products.forEach(p => {
+        const clone = template.content.cloneNode(true);
+        clone.querySelector('.p-img').src = p.thumbnail;
+        clone.querySelector('.p-img').onclick = () => location.href = `details.html?id=${p.id}`;
+        clone.querySelector('.p-title').innerText = p.title;
+        clone.querySelector('.p-price').innerText = `$${p.price}`;
+        clone.querySelector('.p-add-btn').onclick = () => addToCart(p);
+        content.appendChild(clone);
+    });
 }
 
-function handleSearch(val) {
-    const filtered = allProducts.filter(p => p.title.toLowerCase().includes(val.toLowerCase()));
-    renderGrid(filtered);
-}
-
-function handleSort(order) {
-    const sorted = [...allProducts].sort((a, b) => order === 'low' ? a.price - b.price : b.price - a.price);
-    renderGrid(sorted);
-}
-
-// --- 4. Details Logic ---
+// --- 4. DETAILS PAGE (Now Using Template) ---
 async function initDetails() {
     const id = new URLSearchParams(window.location.search).get('id');
-    const content = document.getElementById('app-content');
-    if (!content) return;
-
-    // 1. Check if ID exists and is a valid number
-    if (!id || isNaN(id)) {
-        displayErrorAndRedirect(content, "Invalid Product ID provided.");
-        return;
-    }
+    const content = document.getElementById('details-container');
+    const template = document.getElementById('details-template');
+    if (!id || !content || !template) return;
 
     content.innerHTML = '<div class="loader"></div>';
-
     try {
         const res = await fetch(`${API_URL}/products/${id}`);
-        
-        // 2. Check if the API actually found the product (handle 404)
-        if (!res.ok) {
-            throw new Error("Product not found");
-        }
-
         const p = await res.json();
         
-        // Render the product 
-        content.innerHTML = `
-            <div class="detail-card" style="display:flex; gap:40px; background:white; padding:40px; border-radius:8px; margin-top:20px;">
-                <img src="${p.thumbnail}" style="width:400px; object-fit:contain;">
-                <div>
-                    <h2>${p.title}</h2>
-                    <p style="color:#666;">${p.description}</p>
-                    <h3 style="color:#28a745;">$${p.price}</h3>
-                    <button class="btn-success" onclick="addToCart(${p.id}, '${p.title}', ${p.price})">Add to Cart</button>
-                    <br><br>
-                    <a href="products.html" style="text-decoration:none; color:#007185;">← Back to Shop</a>
-                </div>
-            </div>`;
-            
-    } catch (err) {
-        displayErrorAndRedirect(content, "Oops! The product you are looking for does not exist.");
-    }
+        content.innerHTML = ''; // Clear loader
+        const clone = template.content.cloneNode(true);
+        
+        clone.querySelector('.d-img').src = p.thumbnail;
+        clone.querySelector('.d-title').innerText = p.title;
+        clone.querySelector('.d-desc').innerText = p.description;
+        clone.querySelector('.d-price').innerText = `$${p.price}`;
+        clone.querySelector('.d-add-btn').onclick = () => addToCart(p);
+        
+        content.appendChild(clone);
+    } catch (err) { location.href = 'products.html'; }
 }
 
-
-// Helper function to show a centered error and redirect
-function displayErrorAndRedirect(container, message) {
-    container.innerHTML = `
-        <div style="text-align:center; padding:100px; background:white; border-radius:8px; margin-top:20px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-            <h1 style="color:var(--error); font-size:50px; margin:0;"></h1>
-            <h2 style="color:#333;">${message}</h2>
-            <p style="color:#666;">Redirecting you back to the shop in 3 seconds...</p>
-            <button onclick="location.href='products.html'">Go Back Now</button>
-        </div>
-    `;
-
-    // Auto-redirect after 3 seconds
-    setTimeout(() => {
-        window.location.href = 'products.html';
-    }, 3000);
-}
-
-// --- 5. Cart & Checkout ---
-function addToCart(id, title, price) {
-    const item = cart.find(i => i.id === id);
-    if (item) item.qty++;
-    else cart.push({ id, title, price, qty: 1 });
-    saveCart();
-    showToast(` Added ${title} to cart`);
-}
-
-function saveCart() {
+// --- 5. CART LOGIC (ROW VIEW) ---
+function addToCart(p) {
+    const existing = cart.find(item => item.id === p.id);
+    if (existing) { existing.qty++; } 
+    else { cart.push({ id: p.id, title: p.title, price: p.price, thumbnail: p.thumbnail, qty: 1 }); }
     localStorage.setItem('shop_cart', JSON.stringify(cart));
-    const count = document.getElementById('cart-count');
-    if (count) count.innerText = cart.reduce((s, i) => s + i.qty, 0);
+    updateCartBadge();
+    showToast(`Added ${p.title} to cart`);
 }
 
 function initCart() {
     const content = document.getElementById('app-content');
     if (!content) return;
-    
-    let total = 0;
-    if (cart.length === 0) {
-        content.innerHTML = '<div style="text-align:center; padding:50px;"><h2>Your cart is empty</h2><button onclick="location.href=\'products.html\'">Start Shopping</button></div>';
-    } else {
-        const itemsHTML = cart.map(item => {
-            total += item.price * item.qty;
-            return `
-                <div class="cart-item" style="background:white; padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; border-radius:5px;">
-                    <div><b>${item.title}</b><br>$${item.price} each</div>
-                    <div class="qty-controls">
-                        <button onclick="changeQty(${item.id}, -1)">-</button>
-                        <span style="margin:0 15px; font-weight:bold;">${item.qty}</span>
-                        <button onclick="changeQty(${item.id}, 1)">+</button>
-                    </div>
-                </div>`;
-        }).join('');
-        
-        content.innerHTML = `
-            <h2>Your Shopping Cart</h2>
-            ${itemsHTML}
-            <div style="margin-top:20px; text-align:right; background:white; padding:20px; border-radius:5px;">
-                <h3>Total Amount: $${total.toFixed(2)}</h3>
-                <button class="btn-success" onclick="location.href='checkout.html'" style="padding:15px 30px;">Proceed to Checkout</button>
-            </div>`;
-    }
-}
 
+    // 1. Handle Empty State
+    if (cart.length === 0) {
+        const emptyTemp = document.getElementById('cart-empty-template');
+        content.innerHTML = '';
+        content.appendChild(emptyTemp.content.cloneNode(true));
+        return;
+    }
+
+    // 2. Load Cart Layout
+    const layoutTemp = document.getElementById('cart-layout-template');
+    content.innerHTML = '';
+    content.appendChild(layoutTemp.content.cloneNode(true));
+
+    const listContainer = document.getElementById('cart-list');
+    const footerContainer = document.getElementById('cart-footer');
+    const itemTemp = document.getElementById('cart-card-template');
+    let total = 0;
+
+    // 3. Render Item Rows
+    cart.forEach(item => {
+        total += item.price * item.qty;
+        const clone = itemTemp.content.cloneNode(true);
+        
+        clone.querySelector('.cart-item-name').innerText = item.title;
+        clone.querySelector('.cart-item-price').innerText = `$${item.price}`;
+        clone.querySelector('.item-qty').innerText = item.qty;
+        
+        clone.querySelector('.minus-btn').onclick = () => changeQty(item.id, -1);
+        clone.querySelector('.plus-btn').onclick = () => changeQty(item.id, 1);
+        
+        listContainer.appendChild(clone);
+    });
+
+    // 4. Update Footer (Total)
+    footerContainer.innerHTML = `
+        <div class="cart-summary">
+            <h3>Total Amount: $${total.toFixed(2)}</h3>
+            <button class="btn-success" style="width:250px" onclick="location.href='checkout.html'">Proceed to Checkout</button>
+        </div>`;
+}
 function changeQty(id, delta) {
     const item = cart.find(i => i.id === id);
     if (item) {
         item.qty += delta;
         if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
-        saveCart();
+        localStorage.setItem('shop_cart', JSON.stringify(cart));
         initCart();
+        updateCartBadge();
     }
 }
 
+// --- 6. CHECKOUT & REDIRECT ---
 function initCheckout() {
-    const content = document.getElementById('app-content');
-    if (!content) return;
-    
-    const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-    content.innerHTML = `
-        <div class="auth-container" style="max-width:450px; margin: 40px auto;">
-            <h2>Secure Checkout</h2>
-            <p>Total Amount: <b>$${total.toFixed(2)}</b></p>
-            <form id="payment-form">
-                <input type="text" placeholder="Full Name" required>
-                <input type="text" placeholder="Shipping Address" required>
-                
-                <div style="display:flex; gap:10px; align-items: flex-start;">
-                    <div class="input-group" id="expiry-group" style="flex: 2;">
-                        <input type="month" id="expiry-input" required title="Expiry Date">
-                        <span class="error-message" id="expiry-error">Expiry is required</span>
-                    </div>
-                    
-                    <div style="flex: 1;">
-                        <input type="password" placeholder="CVV" pattern="\\d{3}" maxlength="3" required>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn-success" style="width:100%; margin-top:10px;">Pay Now</button>
-            </form>
-        </div>`;
-    
     const form = document.getElementById('payment-form');
-    const expiryInput = document.getElementById('expiry-input');
-    const expiryGroup = document.getElementById('expiry-group');
-
-    if (form) {
-        form.onsubmit = (e) => {
-            e.preventDefault();
-
-            // Check if expiry is filled
-            if (!expiryInput.value) {
-                expiryGroup.classList.add('show-error');
-                return; // Stop the payment if empty
-            }
-
-            // If filled, proceed with success logic
-            const container = document.querySelector('.auth-container');
-            cart = [];
-            saveCart();
-            if (container) {
-                container.innerHTML = `
-                    <div style="text-align:center; padding: 20px;">
-                        <h2 style="color:#28a745; font-size:50px; margin:0;">✔</h2>
-                        <h2 style="color:#28a745;">Payment Successful</h2>
-                        <p>Your order has been placed. Redirecting to shop...</p>
-                    </div>`;
-            }
-            setTimeout(() => location.href = 'products.html', 3000);
-        };
-
-        // Remove error message once user starts picking a date
-        expiryInput.oninput = () => {
-            if (expiryInput.value) {
-                expiryGroup.classList.remove('show-error');
-            }
-        };
-    }
+    if (!form) return;
+    form.onsubmit = (e) => {
+        e.preventDefault();
+        if (validateField('fullname', 'Required') && validateField('address', 'Required') && validateField('expiry', 'Required') && validateField('cvv', 'Required')) {
+            processSuccess();
+        }
+    };
 }
 
-// --- Helpers ---
-function showToast(msg) {
+function processSuccess() {
+    const container = document.getElementById('app-content');
+    const template = document.getElementById('success-template');
+    cart = []; localStorage.removeItem('shop_cart');
+    container.innerHTML = '';
+    container.appendChild(template.content.cloneNode(true));
+    runRedirectTimer(3, 'products.html');
+}
+
+function runRedirectTimer(seconds, targetUrl) {
+    let timeLeft = seconds;
+    const display = document.getElementById('countdown-number');
+    const timer = setInterval(() => {
+        timeLeft--;
+        if (display) display.innerText = timeLeft;
+        if (timeLeft <= 0) { clearInterval(timer); location.href = targetUrl; }
+    }, 1000);
+}
+
+// --- HELPERS ---
+function validateField(id, msg) {
+    const el = document.getElementById(id);
+    const parent = el.parentElement;
+    parent.querySelectorAll('.error-label').forEach(e => e.remove());
+    if (!el.value.trim()) {
+        el.classList.add('error-border');
+        const s = document.createElement('span'); s.className = 'error-label'; s.innerText = msg;
+        el.after(s); return false;
+    }
+    el.classList.remove('error-border'); return true;
+}
+
+function updateCartBadge() {
+    const el = document.getElementById('cart-count');
+    if (el) el.innerText = cart.reduce((a, b) => a + b.qty, 0);
+}
+
+function showToast(m) {
     const t = document.getElementById('toast');
     if (!t) return;
-    t.innerText = msg;
-    t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 2500);
+    t.innerText = m; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 2000);
 }
 
-function logout() {
-    localStorage.clear();
-    location.href = 'index.html';
-}
-
-function checkAuth() {
-    const token = localStorage.getItem('token');
-    const isLoginPage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/';
-    if (!token && !isLoginPage) {
-        location.href = 'index.html';
-    }
-}
-
-// --- Global Initialization ---
+// --- ROUTER ---
 window.onload = () => {
-    checkAuth();
     injectHeader();
-    const path = window.location.pathname;
-
-    if (path.includes('products.html')) initProducts();
-    else if (path.includes('details.html')) initDetails();
-    else if (path.includes('cart.html')) initCart();
-    else if (path.includes('checkout.html')) initCheckout();
+    const p = window.location.pathname;
+    if (p.includes('index.html') || p === '/') initLogin();
+    else if (p.includes('products.html')) fetchProducts();
+    else if (p.includes('details.html')) initDetails();
+    else if (p.includes('cart.html')) initCart();
+    else if (p.includes('checkout.html')) initCheckout();
 };

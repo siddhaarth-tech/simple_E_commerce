@@ -56,6 +56,25 @@ nav {
     color: white; 
     text-decoration: none; 
 }
+/*===== Input error handling =====*/
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+input.error-border {
+    border: 2px solid var(--error) !important;
+    background-color: #fff8f8;
+}
+
+.error-label {
+    color: var(--error);
+    font-size: 11px;
+    margin-top: -12px;
+    margin-bottom: 10px;
+    display: block;
+}
 
 /* ===== SEARCH & TOOLBAR ===== */
 .toolbar { 
@@ -143,17 +162,62 @@ nav {
 .price { font-size: 1.5rem; color: #B12704; }
 .stock { color: #007600; font-weight: bold; margin-bottom: 20px; }
 
-/* ===== CART UI ===== */
-.cart-item { 
-    display: flex; 
-    align-items: center; 
-    background: white; 
-    padding: 15px; 
-    margin-bottom: 10px; 
-    border-radius: 5px; 
-    justify-content: space-between; 
+/*===== Redirect countdown  =====*/
+
+
+
+.redirect-container {
+    text-align: center;
+    padding: 60px;
+    background: white;
+    border-radius: 12px;
+    margin-top: 40px;
 }
 
+.countdown-circle {
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--accent);
+    margin: 20px 0;
+}
+
+/* ===== CART UI ===== */
+/* Individual Item Card - Full Row Length */
+.cart-item-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Pushes name/price to left, controls to right */
+    background: var(--white);
+    padding: 20px 30px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    width: 100%; /* Ensures it spans the full container width */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.cart-item-details {
+    flex: 2; /* Takes up most of the space on the left */
+}
+
+.cart-item-details h4 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.cart-item-price {
+    color: var(--success);
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.cart-controls {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end; /* Aligns buttons to the far right */
+    align-items: center;
+    gap: 15px;
+}
 .qty-controls { 
     display: flex; 
     align-items: center; 
@@ -269,5 +333,40 @@ input.invalid {
     animation: spin 0.6s linear infinite;
 }
 
+
+/* Style.css additions */
+
+/* The Red Border for empty columns */
+.error-border {
+    border: 2px solid var(--error) !important;
+    background-color: #fff8f8 !important;
+}
+
+/* The Error Message text below the column */
+.error-label {
+    display: block;
+    color: var(--error);
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+/* Success Redirect Styling */
+.redirect-container {
+    text-align: center;
+    padding: 50px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin: 50px auto;
+    max-width: 500px;
+}
+
+#countdown-number {
+    font-size: 24px;
+    color: var(--accent);
+}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 

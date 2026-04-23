@@ -1,14 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Details</title>
-    <meta charset="UTF-8"><title>MiniShop</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Product Details - MiniShop</title>
+    <link rel="stylesheet" href="Style.css">
 </head>
 <body>
     <div id="header-wrapper"></div>
 
-    <main id="app-content" class="container"></main>
+    <main id="app-content" class="container">
+        <div id="details-container"></div>
+    </main>
+
+    <template id="details-template">
+        <div class="detail-card">
+            <img class="detail-img d-img" src="" alt="product">
+            <div class="detail-info">
+                <h2 class="d-title"></h2>
+                <p class="d-desc"></p>
+                <h3 class="d-price" style="color:var(--success)"></h3>
+                <button class="btn-success d-add-btn" style="width:200px">Add to Cart</button>
+                <br><br>
+                <a href="products.html" style="text-decoration:none; color:var(--primary);">← Back to Shop</a>
+            </div>
+        </div>
+    </template>
 
     <div id="toast"></div>
     <script src="script.js"></script>

@@ -1,26 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Login - MiniShop</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Login - MiniShop</title>
+    <link rel="stylesheet" href="Style.css">
 </head>
 <body>
     <div id="header-wrapper"></div>
-    <div class="container" style="display:flex; justify-content:center; align-items:center; min-height:80vh;">
-        <div style="background:white; padding:40px; border-radius:8px; width:100%; max-width:400px; box-shadow:0 4px 10px rgba(0,0,0,0.1); text-align:center;">
+    <main id="app-content" class="container">
+        <div class="auth-container">
             <h2>Login</h2>
             <form id="login-form">
                 <div class="input-group">
-                    <input type="text" id="username" placeholder="Username" required>
+                    <input type="text" id="username" placeholder="Username (Try: emilys)">
                 </div>
                 <div class="input-group">
-                    <input type="password" id="password" placeholder="Password " required>
+                    <input type="password" id="password" placeholder="Password (Try: emilyspass)">
                 </div>
-                <button type="submit" id="login-btn" style="width:100%;">Login</button>
+                <button type="submit" class="btn-success">Login</button>
             </form>
-            <p id="auth-error" style="color:red; margin-top:15px; font-size:14px;"></p>
+            <p id="auth-error" class="error-text"></p>
         </div>
-    </div>
+    </main>
     <script src="script.js"></script>
 </body>
 </html>

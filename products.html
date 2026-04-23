@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Products</title>
-    <meta charset="UTF-8"><title>MiniShop</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Products - MiniShop</title>
+    <link rel="stylesheet" href="Style.css">
 </head>
 <body>
     <div id="header-wrapper"></div>
-
     <main id="app-content" class="container"></main>
+
+    <template id="product-card-template">
+        <div class="product-card">
+            <img class="p-img" src="" alt="product">
+            <h4 class="p-title"></h4>
+            <p class="p-price"></p>
+            <button class="btn-success p-add-btn">Add to Cart</button>
+        </div>
+    </template>
 
     <div id="toast"></div>
     <script src="script.js"></script>

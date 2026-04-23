@@ -1,14 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Cart</title>
-    <meta charset="UTF-8"><title>MiniShop</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>My Cart - MiniShop</title>
+    <link rel="stylesheet" href="Style.css">
 </head>
 <body>
     <div id="header-wrapper"></div>
-
     <main id="app-content" class="container"></main>
+
+    <template id="cart-empty-template">
+        <div class="redirect-container">
+            <h2>Your cart is empty</h2>
+            <button class="btn-success" onclick="location.href='products.html'">Go Shopping</button>
+        </div>
+    </template>
+
+    <template id="cart-layout-template">
+        <div class="cart-header">
+            <h2>Shopping Cart</h2>
+            <button class="btn-outline" onclick="location.href='products.html'">+ Add More Items</button>
+        </div>
+        <div id="cart-list" class="cart-container"></div>
+        <div id="cart-footer"></div>
+    </template>
+
+    <template id="cart-card-template">
+        <div class="cart-item-card">
+            <div class="cart-item-details">
+                <h4 class="cart-item-name"></h4>
+                <p class="cart-item-price"></p>
+            </div>
+            <div class="cart-controls">
+                <button class="qty-btn minus-btn">-</button>
+                <span class="item-qty">1</span>
+                <button class="qty-btn plus-btn">+</button>
+            </div>
+        </div>
+    </template>
 
     <div id="toast"></div>
     <script src="script.js"></script>

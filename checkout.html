@@ -1,16 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Checkout</title>
-    <meta charset="UTF-8"><title>MiniShop</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Checkout - MiniShop</title>
+    <link rel="stylesheet" href="Style.css">
 </head>
 <body>
-    <div id="header-wrapper"></div>
+    <main id="app-content" class="container">
+    <div id="checkout-container" class="auth-container">
+        <h2>Secure Checkout</h2>
+        <form id="payment-form">
+            <div class="input-group">
+                <input type="text" id="fullname" placeholder="Full Name">
+            </div>
+            <div class="input-group">
+                <input type="text" id="address" placeholder="Shipping Address">
+            </div>
+            
+            <div class="payment-row">
+                <div class="input-group flex-1">
+                    <input type="month" id="expiry" title="Expiry Month">
+                </div>
+                <div class="input-group flex-1">
+                    <input type="password" id="cvv" placeholder="CVV" maxlength="3">
+                </div>
+            </div>
 
-    <main id="app-content" class="container"></main>
+            <button type="submit" class="btn-success">Pay Now</button>
+        </form>
+    </div>
+</main>
 
-    <div id="toast"></div>
+    <template id="success-template">
+        <div class="redirect-container">
+            <h1 style="font-size:60px; color:var(--success);">✔</h1>
+            <h2>Payment Successful!</h2>
+            <p>Thank you for your purchase.</p>
+            <p>Redirecting in <b id="countdown-number">3</b> seconds...</p>
+            <button id="go-now-btn">Go to Shop Now</button>
+        </div>
+    </template>
+
     <script src="script.js"></script>
 </body>
 </html>
