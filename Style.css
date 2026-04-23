@@ -296,7 +296,7 @@ button:disabled {
     margin-top: 5px;
     margin-bottom: 10px;
     font-weight: bold;
-    display: none; /* Keep hidden until triggered */
+    display: none;
 }
 
 .input-group.show-error .error-message,
@@ -334,7 +334,7 @@ input.invalid {
 }
 
 
-/* Style.css additions */
+
 
 /* The Red Border for empty columns */
 .error-border {
