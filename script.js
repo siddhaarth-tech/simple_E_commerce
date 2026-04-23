@@ -226,7 +226,8 @@ function initCheckout() {
 function processSuccess() {
     const container = document.getElementById('app-content');
     const template = document.getElementById('success-template');
-    cart = []; localStorage.removeItem('shop_cart');
+    cart = []; 
+    localStorage.removeItem('shop_cart');
     container.innerHTML = '';
     container.appendChild(template.content.cloneNode(true));
     runRedirectTimer(3, 'products.html');
